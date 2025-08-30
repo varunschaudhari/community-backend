@@ -1,0 +1,54 @@
+{
+    "name": "community-backend",
+    "version": "1.0.0",
+    "description": "Community App Backend API with JWT Authentication",
+    "main": "app.js",
+    "scripts": {
+        "start": "node app.js",
+        "dev": "nodemon app.js",
+        "test": "jest",
+        "test:watch": "jest --watch",
+        "lint": "eslint .",
+        "lint:fix": "eslint . --fix"
+    },
+    "keywords": [
+        "nodejs",
+        "express",
+        "mongodb",
+        "mongoose",
+        "jwt",
+        "authentication",
+        "api",
+        "community"
+    ],
+    "author": "Community App Team",
+    "license": "MIT",
+    "dependencies": {
+        "bcrypt": "^5.1.1",
+        "cors": "^2.8.5",
+        "dotenv": "^16.3.1",
+        "express": "^4.18.2",
+        "helmet": "^6.1.5",
+        "jsonwebtoken": "^9.0.2",
+        "mongoose": "^6.12.0",
+        "morgan": "^1.10.0"
+    },
+    "devDependencies": {
+        "eslint": "^7.32.0",
+        "jest": "^27.5.1",
+        "nodemon": "^2.0.22",
+        "supertest": "^6.3.3"
+    },
+    "engines": {
+        "node": ">=14.0.0",
+        "npm": ">=6.0.0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/your-username/community-backend.git"
+    },
+    "bugs": {
+        "url": "https://github.com/your-username/community-backend/issues"
+    },
+    "homepage": "https://github.com/your-username/community-backend#readme"
+}
