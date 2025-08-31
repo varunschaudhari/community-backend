@@ -23,6 +23,12 @@ const userSchema = new mongoose.Schema({
     default: 'member',
     required: true
   },
+  // Reference to Role model for detailed permissions
+  roleId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Role',
+    required: false
+  },
   verified: {
     type: Boolean,
     default: false,
