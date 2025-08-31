@@ -7,6 +7,7 @@ require('dotenv').config();
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
+const memberRoutes = require('./routes/memberRoutes');
 
 // Create Express app
 const app = express();
@@ -112,6 +113,7 @@ app.get('/health', (req, res) => {
 
 // API routes
 app.use('/api/auth', authRoutes);
+app.use('/api/community/members', memberRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -121,6 +123,7 @@ app.get('/', (req, res) => {
         version: '1.0.0',
         endpoints: {
             auth: '/api/auth',
+            members: '/api/community/members',
             health: '/health'
         },
         documentation: 'API documentation coming soon...'
