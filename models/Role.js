@@ -24,11 +24,11 @@ const roleSchema = new mongoose.Schema({
     type: String,
     required: true,
     enum: [
-      // Member permissions
-      'members:read',
-      'members:create', 
-      'members:update',
-      'members:delete',
+        // User permissions
+  'users:read',
+  'users:create',
+  'users:update',
+  'users:delete',
       
       // Role permissions
       'roles:read',
@@ -138,11 +138,11 @@ roleSchema.index({ isDefault: 1 });
 roleSchema.index({ createdAt: -1 });
 roleSchema.index({ permissions: 1 });
 
-// Virtual for member count (will be populated when needed)
+// Virtual for user count (will be populated when needed)
 roleSchema.virtual('memberCount', {
-  ref: 'Member',
+  ref: 'User',
   localField: 'name',
-  foreignField: 'roles',
+  foreignField: 'role',
   count: true
 });
 
@@ -203,7 +203,7 @@ roleSchema.statics.createDefaultRoles = async function (userId) {
       name: 'Super Admin',
       description: 'Full system access with all permissions',
       permissions: [
-        'members:read', 'members:create', 'members:update', 'members:delete',
+        'users:read', 'users:create', 'users:update', 'users:delete',
         'roles:read', 'roles:create', 'roles:update', 'roles:delete',
         'analytics:read',
         'settings:read', 'settings:update',
@@ -221,7 +221,7 @@ roleSchema.statics.createDefaultRoles = async function (userId) {
       name: 'Admin',
       description: 'Administrative access with most permissions',
       permissions: [
-        'members:read', 'members:create', 'members:update',
+        'users:read', 'users:create', 'users:update',
         'roles:read',
         'analytics:read',
         'settings:read',
@@ -239,7 +239,7 @@ roleSchema.statics.createDefaultRoles = async function (userId) {
       name: 'Moderator',
       description: 'Moderation access with limited permissions',
       permissions: [
-        'members:read', 'members:update',
+        'users:read', 'users:update',
         'analytics:read',
         'community:read', 'community:update',
         'events:read', 'events:create', 'events:update',
@@ -254,7 +254,7 @@ roleSchema.statics.createDefaultRoles = async function (userId) {
       name: 'Member',
       description: 'Standard member access with basic permissions',
       permissions: [
-        'members:read',
+        'users:read',
         'community:read',
         'events:read',
         'documents:read',

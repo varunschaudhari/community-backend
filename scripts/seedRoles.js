@@ -12,11 +12,11 @@ const initialRoles = [
         name: 'Super Admin',
         description: 'Full system access with all permissions - highest level administrator',
         permissions: [
-            // Member permissions
-            'members:read',
-            'members:create', 
-            'members:update',
-            'members:delete',
+            // User permissions
+'users:read',
+'users:create',
+'users:update',
+'users:delete',
             
             // Role permissions
             'roles:read',
@@ -68,10 +68,10 @@ const initialRoles = [
         name: 'Admin',
         description: 'Administrative access with most permissions - system administrator',
         permissions: [
-            // Member permissions
-            'members:read',
-            'members:create',
-            'members:update',
+            // User permissions
+            'users:read',
+            'users:create',
+            'users:update',
             
             // Role permissions
             'roles:read',
@@ -117,9 +117,9 @@ const initialRoles = [
         name: 'Moderator',
         description: 'Moderation access with limited permissions - community moderator',
         permissions: [
-            // Member permissions
-            'members:read',
-            'members:update',
+            // User permissions
+            'users:read',
+            'users:update',
             
             // Analytics permissions
             'analytics:read',
@@ -148,8 +148,8 @@ const initialRoles = [
         name: 'Member',
         description: 'Standard member access with basic permissions - regular community member',
         permissions: [
-            // Member permissions
-            'members:read',
+            // User permissions
+            'users:read',
             
             // Community permissions
             'community:read',

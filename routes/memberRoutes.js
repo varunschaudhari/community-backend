@@ -9,25 +9,31 @@ router.use(authenticateToken);
 // Create a new member
 router.post('/create', memberController.createMember);
 
-// Search members for autocomplete
-router.get('/search', memberController.searchMembers);
+// Search users for autocomplete
+router.get('/search', memberController.searchUsers);
 
-// Get all members (with pagination and filtering)
-router.get('/', memberController.getAllMembers);
+// Get all users (with pagination and filtering)
+router.get('/', memberController.getAllUsers);
 
 // Get member by ID
 router.get('/:id', memberController.getMemberById);
 
-// Update member
+// Update user
 router.put('/:id', memberController.updateMember);
 
-// Delete member
+// Update user role
+router.put('/:id/role', memberController.updateUserRole);
+
+// Delete user
 router.delete('/:id', memberController.deleteMember);
 
-// Verify member
-router.patch('/:id/verify', memberController.verifyMember);
+// Verify user
+router.patch('/:id/verify', memberController.verifyUser);
 
-// Get member statistics
-router.get('/stats/overview', memberController.getMemberStats);
+// Toggle user verification
+router.patch('/:id/verification', memberController.toggleUserVerification);
+
+// Get user statistics
+router.get('/stats/overview', memberController.getUserStats);
 
 module.exports = router;

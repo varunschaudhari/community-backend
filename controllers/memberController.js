@@ -1,4 +1,5 @@
-const Member = require('../models/Member');
+const User = require('../models/User');
+const Role = require('../models/Role');
 const bcrypt = require('bcrypt');
 
 class MemberController {
@@ -8,7 +9,7 @@ class MemberController {
   async createMember(req, res) {
     try {
       console.log('Received member data:', JSON.stringify(req.body, null, 2));
-      
+
       const {
         firstName,
         middleName,
@@ -29,21 +30,21 @@ class MemberController {
         childrenName
       } = req.body;
 
-      // Check if member with email already exists
-      const existingMember = await Member.findOne({ email: email.toLowerCase() });
-      if (existingMember) {
+      // Check if user with email already exists
+      const existingUser = await User.findOne({ email: email.toLowerCase() });
+      if (existingUser) {
         return res.status(409).json({
           success: false,
-          message: 'Member with this email already exists'
+          message: 'User with this email already exists'
         });
       }
 
-      // Check if member with phone already exists
-      const existingPhone = await Member.findOne({ phone });
+      // Check if user with phone already exists
+      const existingPhone = await User.findOne({ phone });
       if (existingPhone) {
         return res.status(409).json({
           success: false,
-          message: 'Member with this phone number already exists'
+          message: 'User with this phone number already exists'
         });
       }
 
@@ -51,8 +52,8 @@ class MemberController {
       const saltRounds = 12;
       const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-      // Create new member
-      const memberData = {
+      // Create new user
+      const userData = {
         firstName,
         middleName,
         lastName,
@@ -63,7 +64,7 @@ class MemberController {
         adhar,
         maritalStatus,
         dateOfBirth: new Date(dateOfBirth),
-        roles,
+        role: roles, // Map roles to role field
         kul,
         gotra,
         fatherName,
@@ -73,25 +74,25 @@ class MemberController {
 
       // Add date of marriage if provided and marital status is married
       if (dateOfMarriage && maritalStatus === 'Married') {
-        memberData.dateOfMarriage = new Date(dateOfMarriage);
+        userData.dateOfMarriage = new Date(dateOfMarriage);
       }
 
-      const member = new Member(memberData);
-      await member.save();
+      const user = new User(userData);
+      await user.save();
 
       // Remove password from response
-      const memberResponse = member.toObject();
-      delete memberResponse.password;
+      const userResponse = user.toObject();
+      delete userResponse.password;
 
       res.status(201).json({
         success: true,
-        message: 'Member created successfully',
-        data: memberResponse
+        message: 'User created successfully',
+        data: userResponse
       });
 
     } catch (error) {
       console.error('Create member error:', error);
-      
+
       if (error.name === 'ValidationError') {
         const errors = Object.values(error.errors).map(err => err.message);
         console.log('Validation errors:', errors);
@@ -111,9 +112,9 @@ class MemberController {
   }
 
   /**
-   * Get all members (with pagination and filtering)
+   * Get all users (with pagination and filtering)
    */
-  async getAllMembers(req, res) {
+  async getAllUsers(req, res) {
     try {
       const {
         page = 1,
@@ -152,17 +153,29 @@ class MemberController {
         filter.isActive = isActive === 'true';
       }
 
-      const members = await Member.find(filter)
+      const users = await User.find(filter)
+        .populate('roleId', 'name description permissions')
         .select('-password')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(parseInt(limit));
 
-      const total = await Member.countDocuments(filter);
+      const total = await User.countDocuments(filter);
+
+      // Add role information to each user
+      const usersWithRoles = users.map(user => {
+        const userObj = user.toObject();
+        return {
+          ...userObj,
+          roleName: userObj.roleId?.name || 'No Role',
+          roleDescription: userObj.roleId?.description || '',
+          permissions: userObj.roleId?.permissions || []
+        };
+      });
 
       res.json({
         success: true,
-        data: members,
+        data: usersWithRoles,
         pagination: {
           currentPage: parseInt(page),
           totalPages: Math.ceil(total / limit),
@@ -172,10 +185,10 @@ class MemberController {
       });
 
     } catch (error) {
-      console.error('Get all members error:', error);
+      console.error('Get all users error:', error);
       res.status(500).json({
         success: false,
-        message: 'Failed to fetch members',
+        message: 'Failed to fetch users',
         error: error.message
       });
     }
@@ -188,25 +201,35 @@ class MemberController {
     try {
       const { id } = req.params;
 
-      const member = await Member.findById(id).select('-password');
-      
-      if (!member) {
+      const user = await User.findById(id)
+        .populate('roleId', 'name description permissions')
+        .select('-password');
+
+      if (!user) {
         return res.status(404).json({
           success: false,
-          message: 'Member not found'
+          message: 'User not found'
         });
       }
 
+      const userObj = user.toObject();
+      const userWithRole = {
+        ...userObj,
+        roleName: userObj.roleId?.name || 'No Role',
+        roleDescription: userObj.roleId?.description || '',
+        permissions: userObj.roleId?.permissions || []
+      };
+
       res.json({
         success: true,
-        data: member
+        data: userWithRole
       });
 
     } catch (error) {
-      console.error('Get member by ID error:', error);
+      console.error('Get user by ID error:', error);
       res.status(500).json({
         success: false,
-        message: 'Failed to fetch member',
+        message: 'Failed to fetch user',
         error: error.message
       });
     }
@@ -232,28 +255,38 @@ class MemberController {
         updateData.dateOfMarriage = new Date(updateData.dateOfMarriage);
       }
 
-      const member = await Member.findByIdAndUpdate(
+      const user = await User.findByIdAndUpdate(
         id,
         updateData,
         { new: true, runValidators: true }
-      ).select('-password');
+      )
+        .populate('roleId', 'name description permissions')
+        .select('-password');
 
-      if (!member) {
+      if (!user) {
         return res.status(404).json({
           success: false,
-          message: 'Member not found'
+          message: 'User not found'
         });
       }
 
+      const userObj = user.toObject();
+      const userWithRole = {
+        ...userObj,
+        roleName: userObj.roleId?.name || 'No Role',
+        roleDescription: userObj.roleId?.description || '',
+        permissions: userObj.roleId?.permissions || []
+      };
+
       res.json({
         success: true,
-        message: 'Member updated successfully',
-        data: member
+        message: 'User updated successfully',
+        data: userWithRole
       });
 
     } catch (error) {
-      console.error('Update member error:', error);
-      
+      console.error('Update user error:', error);
+
       if (error.name === 'ValidationError') {
         const errors = Object.values(error.errors).map(err => err.message);
         return res.status(400).json({
@@ -265,7 +298,7 @@ class MemberController {
 
       res.status(500).json({
         success: false,
-        message: 'Failed to update member',
+        message: 'Failed to update user',
         error: error.message
       });
     }
@@ -278,34 +311,34 @@ class MemberController {
     try {
       const { id } = req.params;
 
-      const member = await Member.findByIdAndDelete(id);
-      
-      if (!member) {
+      const user = await User.findByIdAndDelete(id);
+
+      if (!user) {
         return res.status(404).json({
           success: false,
-          message: 'Member not found'
+          message: 'User not found'
         });
       }
 
       res.json({
         success: true,
-        message: 'Member deleted successfully'
+        message: 'User deleted successfully'
       });
 
     } catch (error) {
-      console.error('Delete member error:', error);
+      console.error('Delete user error:', error);
       res.status(500).json({
         success: false,
-        message: 'Failed to delete member',
+        message: 'Failed to delete user',
         error: error.message
       });
     }
   }
 
   /**
-   * Search members for autocomplete
+   * Search users for autocomplete
    */
-  async searchMembers(req, res) {
+  async searchUsers(req, res) {
     try {
       const { q, type } = req.query;
 
@@ -325,16 +358,16 @@ class MemberController {
         searchField = 'childrenName';
       }
 
-      const members = await Member.find({
+      const users = await User.find({
         [searchField]: { $regex: q, $options: 'i' },
         isActive: true
       })
-      .select(`${searchField} firstName lastName`)
-      .limit(10);
+        .select(`${searchField} firstName lastName`)
+        .limit(10);
 
-      const results = members.map(member => ({
-        id: member._id,
-        name: member[searchField] || `${member.firstName} ${member.lastName}`,
+      const results = users.map(user => ({
+        id: user._id,
+        name: user[searchField] || `${user.firstName} ${user.lastName}`,
         type
       }));
 
@@ -344,70 +377,70 @@ class MemberController {
       });
 
     } catch (error) {
-      console.error('Search members error:', error);
+      console.error('Search users error:', error);
       res.status(500).json({
         success: false,
-        message: 'Failed to search members',
+        message: 'Failed to search users',
         error: error.message
       });
     }
   }
 
   /**
-   * Verify member
+   * Verify user
    */
-  async verifyMember(req, res) {
+  async verifyUser(req, res) {
     try {
       const { id } = req.params;
 
-      const member = await Member.findByIdAndUpdate(
+      const user = await User.findByIdAndUpdate(
         id,
-        { isVerified: true },
+        { verified: true },
         { new: true }
       ).select('-password');
 
-      if (!member) {
+      if (!user) {
         return res.status(404).json({
           success: false,
-          message: 'Member not found'
+          message: 'User not found'
         });
       }
 
       res.json({
         success: true,
-        message: 'Member verified successfully',
-        data: member
+        message: 'User verified successfully',
+        data: user
       });
 
     } catch (error) {
-      console.error('Verify member error:', error);
+      console.error('Verify user error:', error);
       res.status(500).json({
         success: false,
-        message: 'Failed to verify member',
+        message: 'Failed to verify user',
         error: error.message
       });
     }
   }
 
   /**
-   * Get member statistics
+   * Get user statistics
    */
-  async getMemberStats(req, res) {
+  async getUserStats(req, res) {
     try {
-      const totalMembers = await Member.countDocuments();
-      const verifiedMembers = await Member.countDocuments({ isVerified: true });
-      const activeMembers = await Member.countDocuments({ isActive: true });
-      
-      const roleStats = await Member.aggregate([
+      const totalUsers = await User.countDocuments();
+      const verifiedUsers = await User.countDocuments({ verified: true });
+      const activeUsers = await User.countDocuments({ isActive: true });
+
+      const roleStats = await User.aggregate([
         {
           $group: {
-            _id: '$roles',
+            _id: '$role',
             count: { $sum: 1 }
           }
         }
       ]);
 
-      const maritalStats = await Member.aggregate([
+      const maritalStats = await User.aggregate([
         {
           $group: {
             _id: '$maritalStatus',
@@ -419,11 +452,11 @@ class MemberController {
       res.json({
         success: true,
         data: {
-          total: totalMembers,
-          verified: verifiedMembers,
-          active: activeMembers,
-          unverified: totalMembers - verifiedMembers,
-          inactive: totalMembers - activeMembers,
+          total: totalUsers,
+          verified: verifiedUsers,
+          active: activeUsers,
+          unverified: totalUsers - verifiedUsers,
+          inactive: totalUsers - activeUsers,
           roleDistribution: roleStats,
           maritalDistribution: maritalStats
         }
@@ -434,6 +467,91 @@ class MemberController {
       res.status(500).json({
         success: false,
         message: 'Failed to fetch member statistics',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Update user role
+   */
+  async updateUserRole(req, res) {
+    try {
+      const { id } = req.params;
+      const { roleId } = req.body;
+
+      const user = await User.findById(id);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+
+      // Verify role exists
+      if (roleId) {
+        const role = await Role.findById(roleId);
+        if (!role) {
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid role ID'
+          });
+        }
+      }
+
+      user.roleId = roleId;
+      await user.save();
+
+      const updatedUser = await User.findById(id)
+        .populate('roleId', 'name description permissions')
+        .select('-password');
+
+      res.json({
+        success: true,
+        message: 'User role updated successfully',
+        data: updatedUser
+      });
+    } catch (error) {
+      console.error('Update user role error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to update user role',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Toggle user verification status
+   */
+  async toggleUserVerification(req, res) {
+    try {
+      const { id } = req.params;
+
+      const user = await User.findById(id);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+
+      user.verified = !user.verified;
+      await user.save();
+
+      res.json({
+        success: true,
+        message: `User ${user.verified ? 'verified' : 'unverified'} successfully`,
+        data: {
+          id: user._id,
+          verified: user.verified
+        }
+      });
+    } catch (error) {
+      console.error('Toggle user verification error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to toggle user verification',
         error: error.message
       });
     }

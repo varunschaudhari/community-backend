@@ -1,8 +1,9 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 
-// User Schema definition
+// Unified User Schema definition - combining User and Member fields
 const userSchema = new mongoose.Schema({
+  // Authentication & Basic Info (from User model)
   username: {
     type: String,
     required: [true, 'Username is required'],
@@ -15,24 +16,7 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: [true, 'Password is required'],
-    minlength: [6, 'Password must be at least 6 characters long']
-  },
-  role: {
-    type: String,
-    enum: ['admin', 'member'],
-    default: 'member',
-    required: true
-  },
-  // Reference to Role model for detailed permissions
-  roleId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Role',
-    required: false
-  },
-  verified: {
-    type: Boolean,
-    default: false,
-    required: true
+    minlength: [8, 'Password must be at least 8 characters long']
   },
   email: {
     type: String,
@@ -40,32 +24,148 @@ const userSchema = new mongoose.Schema({
     unique: true,
     trim: true,
     lowercase: true,
-    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email address']
+    match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Please enter a valid email']
   },
+
+  // Personal Information (from Member model)
   firstName: {
     type: String,
+    required: [true, 'First name is required'],
     trim: true,
+    minlength: [2, 'First name must be at least 2 characters'],
     maxlength: [50, 'First name cannot exceed 50 characters']
+  },
+  middleName: {
+    type: String,
+    trim: true
   },
   lastName: {
     type: String,
+    required: [true, 'Last name is required'],
     trim: true,
+    minlength: [2, 'Last name must be at least 2 characters'],
     maxlength: [50, 'Last name cannot exceed 50 characters']
+  },
+  phone: {
+    type: String,
+    required: false, // Made optional for basic users
+    trim: true,
+    match: [/^[6-9]\d{9}$/, 'Please enter a valid 10-digit phone number']
+  },
+
+  // Identity Documents (from Member model)
+  pan: {
+    type: String,
+    trim: true,
+    uppercase: true,
+    match: [/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, 'Please enter a valid PAN number']
+  },
+  adhar: {
+    type: String,
+    trim: true,
+    match: [/^\d{12}$/, 'Please enter a valid 12-digit Aadhaar number']
+  },
+
+  // Personal Details (from Member model)
+  maritalStatus: {
+    type: String,
+    required: false, // Made optional for basic users
+    enum: ['Single', 'Married', 'Divorced', 'Widowed']
+  },
+  dateOfBirth: {
+    type: Date,
+    required: false, // Made optional for basic users
+    validate: {
+      validator: function (value) {
+        return value <= new Date();
+      },
+      message: 'Date of birth cannot be in the future'
+    }
+  },
+  dateOfMarriage: {
+    type: Date,
+    validate: {
+      validator: function (value) {
+        if (this.maritalStatus === 'Married' && !value) {
+          return false;
+        }
+        return !value || value <= new Date();
+      },
+      message: 'Date of marriage cannot be in the future'
+    }
+  },
+
+  // Community Information (from Member model)
+  kul: {
+    type: String,
+    trim: true
+  },
+  gotra: {
+    type: String,
+    trim: true
+  },
+
+  // Family Information (from Member model)
+  fatherName: {
+    type: String,
+    trim: true
+  },
+  motherName: {
+    type: String,
+    trim: true
+  },
+  childrenName: {
+    type: String,
+    trim: true
+  },
+
+  // Role & Permissions (enhanced from both models)
+  role: {
+    type: String,
+    enum: ['Super Admin', 'Admin', 'Member', 'Moderator', 'Guest', 'admin'], // Added 'admin' to match seed script
+    default: 'Member',
+    required: true
+  },
+  // Reference to Role model for detailed permissions (from User model)
+  roleId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Role',
+    required: false
+  },
+
+  // System fields (combined from both models)
+  verified: {
+    type: Boolean,
+    default: false,
+    required: true
+  },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  lastLogin: {
+    type: Date
   },
   createdAt: {
     type: Date,
     default: Date.now
   },
-  lastLogin: {
-    type: Date
+  updatedAt: {
+    type: Date,
+    default: Date.now
   }
 }, {
   timestamps: true // Adds createdAt and updatedAt fields automatically
 });
 
-// Index for better query performance
+// Indexes for better query performance
 userSchema.index({ username: 1 });
 userSchema.index({ email: 1 });
+userSchema.index({ phone: 1 });
+userSchema.index({ firstName: 1, lastName: 1 });
+userSchema.index({ role: 1 });
+userSchema.index({ verified: 1 });
+userSchema.index({ isActive: 1 });
 
 // Pre-save middleware to hash password before saving
 userSchema.pre('save', async function (next) {
@@ -80,6 +180,12 @@ userSchema.pre('save', async function (next) {
   } catch (error) {
     next(error);
   }
+});
+
+// Pre-save middleware to update the updatedAt field
+userSchema.pre('save', function (next) {
+  this.updatedAt = new Date();
+  next();
 });
 
 // Instance method to compare password
@@ -108,10 +214,18 @@ userSchema.statics.findByEmail = function (email) {
   return this.findOne({ email: email.toLowerCase() });
 };
 
-// Virtual for full name
+// Virtual for full name (enhanced to include middle name)
 userSchema.virtual('fullName').get(function () {
+  if (this.middleName) {
+    return `${this.firstName} ${this.middleName} ${this.lastName}`;
+  }
+  return `${this.firstName} ${this.lastName}`;
+});
+
+// Virtual for display name (falls back to username if no name)
+userSchema.virtual('displayName').get(function () {
   if (this.firstName && this.lastName) {
-    return `${this.firstName} ${this.lastName}`;
+    return this.fullName;
   }
   return this.username;
 });
@@ -124,6 +238,7 @@ userSchema.set('toJSON', {
     return ret;
   }
 });
+userSchema.set('toObject', { virtuals: true });
 
 // Create and export the User model
 const User = mongoose.model('User', userSchema);

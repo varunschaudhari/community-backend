@@ -157,7 +157,12 @@ const register = async (req, res) => {
             email: email.toLowerCase(),
             firstName,
             lastName,
-            verified: true // Set to true for demo, in production this should be false initially
+            verified: true, // Set to true for demo, in production this should be false initially
+            // Provide default values for optional fields
+            phone: req.body.phone || '0000000000', // Default phone number
+            maritalStatus: req.body.maritalStatus || 'Single', // Default marital status
+            dateOfBirth: req.body.dateOfBirth || new Date('1990-01-01'), // Default date of birth
+            role: req.body.role || 'Member' // Default role
         });
 
         await newUser.save();
@@ -269,12 +274,21 @@ const logout = async (req, res) => {
  */
 const validateToken = async (req, res) => {
     try {
-        // If middleware passed, token is valid
+        // Get full user data from database
+        const user = await User.findById(req.user.userId);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
         res.status(200).json({
             success: true,
             message: 'Token is valid',
             data: {
-                user: req.user
+                user: user.getPublicProfile()
             }
         });
 

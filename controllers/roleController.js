@@ -1,5 +1,5 @@
 const Role = require('../models/Role');
-const Member = require('../models/Member');
+const User = require('../models/User');
 
 class RoleController {
   /**
@@ -51,7 +51,7 @@ class RoleController {
       // Get member counts for each role
       const rolesWithMemberCount = await Promise.all(
         roles.map(async (role) => {
-          const memberCount = await Member.countDocuments({ roles: role.name });
+          const memberCount = await User.countDocuments({ role: role.name });
           const roleObj = role.toObject();
           roleObj.memberCount = memberCount;
           return roleObj;
@@ -100,7 +100,7 @@ class RoleController {
       }
 
       // Get member count
-      const memberCount = await Member.countDocuments({ roles: role.name });
+      const memberCount = await User.countDocuments({ role: role.name });
       const roleObj = role.toObject();
       roleObj.memberCount = memberCount;
 
@@ -276,12 +276,12 @@ class RoleController {
         });
       }
 
-      // Check if role is assigned to any members
-      const memberCount = await Member.countDocuments({ roles: role.name });
+      // Check if role is assigned to any users
+      const memberCount = await User.countDocuments({ role: role.name });
       if (memberCount > 0) {
         return res.status(400).json({
           success: false,
-          message: `Cannot delete role. It is assigned to ${memberCount} member(s). Please reassign members before deleting.`
+          message: `Cannot delete role. It is assigned to ${memberCount} user(s). Please reassign users before deleting.`
         });
       }
 
@@ -445,31 +445,31 @@ class RoleController {
     try {
       const permissions = [
         {
-          id: 'members:read',
-          name: 'View Members',
-          description: 'Can view community members',
-          resource: 'members',
+          id: 'users:read',
+          name: 'View Users',
+          description: 'Can view community users',
+          resource: 'users',
           action: 'read'
         },
         {
-          id: 'members:create',
-          name: 'Create Members',
-          description: 'Can create new members',
-          resource: 'members',
+          id: 'users:create',
+          name: 'Create Users',
+          description: 'Can create new users',
+          resource: 'users',
           action: 'create'
         },
         {
-          id: 'members:update',
-          name: 'Update Members',
-          description: 'Can edit member information',
-          resource: 'members',
+          id: 'users:update',
+          name: 'Update Users',
+          description: 'Can edit user information',
+          resource: 'users',
           action: 'update'
         },
         {
-          id: 'members:delete',
-          name: 'Delete Members',
-          description: 'Can remove members',
-          resource: 'members',
+          id: 'users:delete',
+          name: 'Delete Users',
+          description: 'Can remove users',
+          resource: 'users',
           action: 'delete'
         },
         {
@@ -552,16 +552,16 @@ class RoleController {
       const rolesByMemberCount = await Role.aggregate([
         {
           $lookup: {
-            from: 'members',
+            from: 'users',
             localField: 'name',
-            foreignField: 'roles',
-            as: 'members'
+            foreignField: 'role',
+            as: 'users'
           }
         },
         {
           $project: {
             name: 1,
-            memberCount: { $size: '$members' }
+            memberCount: { $size: '$users' }
           }
         },
         {

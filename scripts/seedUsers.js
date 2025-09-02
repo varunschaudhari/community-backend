@@ -14,8 +14,11 @@ const sampleUsers = [
         email: 'admin@telicommunity.com',
         firstName: 'System',
         lastName: 'Administrator',
-        role: 'admin',
-        verified: true
+        role: 'Admin', // Fixed to match schema
+        verified: true,
+        phone: '9876543210',
+        maritalStatus: 'Single',
+        dateOfBirth: new Date('1990-01-01')
     },
     {
         username: 'varun',
@@ -23,8 +26,11 @@ const sampleUsers = [
         email: 'varunschaudhari@gmail.com',
         firstName: 'Varun',
         lastName: 'Chaudhari',
-        role: 'admin',
-        verified: true
+        role: 'Super Admin', // Fixed to match schema
+        verified: true,
+        phone: '9876543211',
+        maritalStatus: 'Single',
+        dateOfBirth: new Date('1990-01-01')
     },
     {
         username: 'moderator',
@@ -32,8 +38,11 @@ const sampleUsers = [
         email: 'moderator@telicommunity.com',
         firstName: 'Community',
         lastName: 'Moderator',
-        role: 'member',
-        verified: true
+        role: 'Moderator',
+        verified: true,
+        phone: '9876543212',
+        maritalStatus: 'Single',
+        dateOfBirth: new Date('1990-01-01')
     },
     {
         username: 'member1',
@@ -41,8 +50,11 @@ const sampleUsers = [
         email: 'john.doe@example.com',
         firstName: 'John',
         lastName: 'Doe',
-        role: 'member',
-        verified: true
+        role: 'Member',
+        verified: true,
+        phone: '9876543213',
+        maritalStatus: 'Single',
+        dateOfBirth: new Date('1990-01-01')
     },
     {
         username: 'member2',
@@ -50,8 +62,11 @@ const sampleUsers = [
         email: 'jane.smith@example.com',
         firstName: 'Jane',
         lastName: 'Smith',
-        role: 'member',
-        verified: true
+        role: 'Member',
+        verified: true,
+        phone: '9876543214',
+        maritalStatus: 'Single',
+        dateOfBirth: new Date('1990-01-01')
     },
     {
         username: 'unverified',
@@ -59,8 +74,11 @@ const sampleUsers = [
         email: 'pending@example.com',
         firstName: 'Pending',
         lastName: 'User',
-        role: 'member',
-        verified: false
+        role: 'Member',
+        verified: false,
+        phone: '9876543215',
+        maritalStatus: 'Single',
+        dateOfBirth: new Date('1990-01-01')
     }
 ];
 
@@ -145,7 +163,7 @@ const seedUsers = async () => {
         console.log('   🔐 Varun: Super Admin (Full system access)');
         console.log('   👨‍💼 Admin: Admin (Administrative access)');
         console.log('   🛡️  Moderator: Moderator (Moderation access)');
-        console.log('   👥 Members: Member (Standard access)');
+        console.log('   👥 Users: Member (Standard access)');
 
         console.log('\n🔗 API Endpoints:');
         console.log('   Login: POST http://localhost:5000/api/auth/login');
