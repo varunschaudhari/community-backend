@@ -109,9 +109,17 @@ const seedUsers = async () => {
             console.log('   Creating users without role assignments...');
         }
 
-        // Clear existing users (optional - comment out to keep existing data)
-        await User.deleteMany({});
-        console.log('🗑️  Cleared existing users');
+        // Update system user's roleId if it exists but doesn't have roleId
+        const systemUser = await User.findOne({ email: 'system@admin.com' });
+        if (systemUser && !systemUser.roleId && superAdminRole) {
+            systemUser.roleId = superAdminRole._id;
+            await systemUser.save();
+            console.log('✅ Updated system user with Super Admin roleId');
+        }
+
+        // Clear existing users except system user (preserve system user created by seedRoles)
+        await User.deleteMany({ email: { $ne: 'system@admin.com' } });
+        console.log('🗑️  Cleared existing users (preserved system user)');
 
         // Create sample users with role assignments
         const createdUsers = [];

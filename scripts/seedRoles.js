@@ -13,48 +13,48 @@ const initialRoles = [
         description: 'Full system access with all permissions - highest level administrator',
         permissions: [
             // User permissions
-'users:read',
-'users:create',
-'users:update',
-'users:delete',
-            
+            'users:read',
+            'users:create',
+            'users:update',
+            'users:delete',
+
             // Role permissions
             'roles:read',
             'roles:create',
-            'roles:update', 
+            'roles:update',
             'roles:delete',
-            
+
             // Analytics permissions
             'analytics:read',
-            
+
             // Settings permissions
             'settings:read',
             'settings:update',
-            
+
             // User management permissions
             'users:read',
             'users:create',
             'users:update',
             'users:delete',
-            
+
             // Community permissions
             'community:read',
             'community:create',
             'community:update',
             'community:delete',
-            
+
             // Event permissions
             'events:read',
             'events:create',
             'events:update',
             'events:delete',
-            
+
             // Document permissions
             'documents:read',
             'documents:create',
             'documents:update',
             'documents:delete',
-            
+
             // Notification permissions
             'notifications:read',
             'notifications:create',
@@ -72,39 +72,39 @@ const initialRoles = [
             'users:read',
             'users:create',
             'users:update',
-            
+
             // Role permissions
             'roles:read',
             'roles:create',
             'roles:update',
-            
+
             // Analytics permissions
             'analytics:read',
-            
+
             // Settings permissions
             'settings:read',
             'settings:update',
-            
+
             // User management permissions
             'users:read',
             'users:create',
             'users:update',
-            
+
             // Community permissions
             'community:read',
             'community:create',
             'community:update',
-            
+
             // Event permissions
             'events:read',
             'events:create',
             'events:update',
-            
+
             // Document permissions
             'documents:read',
             'documents:create',
             'documents:update',
-            
+
             // Notification permissions
             'notifications:read',
             'notifications:create',
@@ -120,23 +120,23 @@ const initialRoles = [
             // User permissions
             'users:read',
             'users:update',
-            
+
             // Analytics permissions
             'analytics:read',
-            
+
             // Community permissions
             'community:read',
             'community:update',
-            
+
             // Event permissions
             'events:read',
             'events:create',
             'events:update',
-            
+
             // Document permissions
             'documents:read',
             'documents:create',
-            
+
             // Notification permissions
             'notifications:read',
             'notifications:create'
@@ -150,16 +150,16 @@ const initialRoles = [
         permissions: [
             // User permissions
             'users:read',
-            
+
             // Community permissions
             'community:read',
-            
+
             // Event permissions
             'events:read',
-            
+
             // Document permissions
             'documents:read',
-            
+
             // Notification permissions
             'notifications:read'
         ],
@@ -172,7 +172,7 @@ const initialRoles = [
         permissions: [
             // Community permissions
             'community:read',
-            
+
             // Event permissions
             'events:read'
         ],
@@ -196,24 +196,33 @@ const seedRoles = async () => {
         });
         console.log('✅ Connected to MongoDB');
 
-        // Find admin user to use as creator
-        const adminUser = await User.findOne({ role: 'admin' });
-        if (!adminUser) {
-            console.error('❌ No admin user found. Please run seedUsers.js first.');
-            return;
-        }
-        console.log(`👤 Using admin user: ${adminUser.username} (${adminUser.email})`);
-
         // Clear existing roles (optional - comment out to keep existing data)
         await Role.deleteMany({});
         console.log('🗑️  Cleared existing roles');
 
-        // Create initial roles
+        // Find or create a system user for createdBy field
+        let systemUser = await User.findOne({ email: 'system@admin.com' });
+        if (!systemUser) {
+            systemUser = new User({
+                username: 'system_admin',
+                firstName: 'System',
+                lastName: 'Admin',
+                email: 'system@admin.com',
+                password: 'system123', // This will be hashed by pre-save middleware
+                role: 'Super Admin',
+                isActive: true,
+                verified: true
+            });
+            await systemUser.save();
+            console.log('✅ Created system user for role creation');
+        }
+
+        // Create initial roles with createdBy field
         const createdRoles = [];
         for (const roleData of initialRoles) {
             const role = new Role({
                 ...roleData,
-                createdBy: adminUser._id
+                createdBy: systemUser._id
             });
             await role.save();
             createdRoles.push({
@@ -236,7 +245,7 @@ const seedRoles = async () => {
         console.log('   📝 Custom Roles: Can be created, modified, or deleted');
 
         console.log('\n🎯 Admin Roles Available:');
-        const adminRoles = createdRoles.filter(role => 
+        const adminRoles = createdRoles.filter(role =>
             role.name === 'Super Admin' || role.name === 'Admin'
         );
         adminRoles.forEach(role => {
@@ -265,5 +274,5 @@ const seedRoles = async () => {
     }
 };
 
-// Run the seed function
+// Run the seed functionqs
 seedRoles();
