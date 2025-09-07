@@ -204,6 +204,31 @@ userSchema.methods.getPublicProfile = function () {
   return userObject;
 };
 
+// Instance method to check if user has a specific permission
+userSchema.methods.hasPermission = async function (permission) {
+  try {
+    // If user has a roleId, populate the role and check permissions
+    if (this.roleId) {
+      await this.populate('roleId');
+      return this.roleId && this.roleId.permissions.includes(permission);
+    }
+
+    // Fallback: check role-based permissions (basic check)
+    const rolePermissions = {
+      'Super Admin': ['users:read', 'users:create', 'users:update', 'users:delete', 'roles:read', 'roles:create', 'roles:update', 'roles:delete', 'analytics:read', 'settings:read', 'settings:update', 'community:read', 'community:create', 'community:update', 'community:delete', 'events:read', 'events:create', 'events:update', 'events:delete', 'documents:read', 'documents:create', 'documents:update', 'documents:delete', 'notifications:read', 'notifications:create', 'notifications:update', 'notifications:delete'],
+      'Admin': ['users:read', 'users:create', 'users:update', 'analytics:read', 'community:read', 'community:create', 'community:update', 'events:read', 'events:create', 'events:update', 'documents:read', 'documents:create', 'documents:update', 'notifications:read', 'notifications:create'],
+      'Moderator': ['users:read', 'users:update', 'analytics:read', 'community:read', 'community:update', 'events:read', 'events:create', 'events:update', 'documents:read', 'documents:create', 'notifications:read', 'notifications:create'],
+      'Member': ['users:read', 'community:read', 'events:read', 'events:create', 'events:update', 'documents:read', 'documents:create', 'documents:update', 'notifications:read', 'notifications:create'],
+      'Guest': ['community:read', 'events:read']
+    };
+
+    return rolePermissions[this.role] && rolePermissions[this.role].includes(permission);
+  } catch (error) {
+    console.error('Error checking permission:', error);
+    return false;
+  }
+};
+
 // Static method to find user by username
 userSchema.statics.findByUsername = function (username) {
   return this.findOne({ username: username.toLowerCase() });

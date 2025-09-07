@@ -9,6 +9,8 @@ require('dotenv').config();
 const authRoutes = require('./routes/authRoutes');
 const memberRoutes = require('./routes/memberRoutes');
 const roleRoutes = require('./routes/roleRoutes');
+const systemAuthRoutes = require('./routes/systemAuthRoutes');
+const systemUserRoutes = require('./routes/systemUserRoutes');
 
 // Create Express app
 const app = express();
@@ -116,6 +118,8 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/community/users', memberRoutes);
 app.use('/api/roles', roleRoutes);
+app.use('/api/system/auth', systemAuthRoutes);
+app.use('/api/system/users', systemUserRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -127,6 +131,8 @@ app.get('/', (req, res) => {
             auth: '/api/auth',
             users: '/api/community/users',
             roles: '/api/roles',
+            systemAuth: '/api/system/auth',
+            systemUsers: '/api/system/users',
             health: '/health'
         },
         documentation: 'API documentation coming soon...'
