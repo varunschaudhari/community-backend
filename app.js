@@ -11,6 +11,7 @@ const memberRoutes = require('./routes/memberRoutes');
 const roleRoutes = require('./routes/roleRoutes');
 const systemAuthRoutes = require('./routes/systemAuthRoutes');
 const systemUserRoutes = require('./routes/systemUserRoutes');
+const permissionRoutes = require('./routes/permissionRoutes');
 
 // Create Express app
 const app = express();
@@ -120,6 +121,7 @@ app.use('/api/community/users', memberRoutes);
 app.use('/api/roles', roleRoutes);
 app.use('/api/system/auth', systemAuthRoutes);
 app.use('/api/system/users', systemUserRoutes);
+app.use('/api/permissions', permissionRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {

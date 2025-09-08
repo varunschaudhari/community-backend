@@ -239,6 +239,11 @@ userSchema.statics.findByEmail = function (email) {
   return this.findOne({ email: email.toLowerCase() });
 };
 
+// Static method to find user by mobile number
+userSchema.statics.findByMobile = function (mobile) {
+  return this.findOne({ phone: mobile });
+};
+
 // Virtual for full name (enhanced to include middle name)
 userSchema.virtual('fullName').get(function () {
   if (this.middleName) {

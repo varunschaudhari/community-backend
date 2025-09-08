@@ -75,7 +75,7 @@ const systemUserSchema = new mongoose.Schema({
   },
 
   // System Access & Permissions (Unified with Community Users)
-  systemRole: {
+  role: {
     type: String,
     enum: ['Super Admin', 'Admin', 'Moderator', 'Member', 'Guest'],
     default: 'Member',
@@ -161,7 +161,7 @@ systemUserSchema.index({ username: 1 });
 systemUserSchema.index({ email: 1 });
 systemUserSchema.index({ employeeId: 1 });
 systemUserSchema.index({ department: 1 });
-systemUserSchema.index({ systemRole: 1 });
+systemUserSchema.index({ role: 1 });
 systemUserSchema.index({ accessLevel: 1 });
 systemUserSchema.index({ verified: 1 });
 systemUserSchema.index({ isActive: 1 });
@@ -263,7 +263,7 @@ systemUserSchema.methods.hasPermission = async function (permission) {
       'Guest': ['community:read', 'events:read']
     };
 
-    return rolePermissions[this.systemRole] && rolePermissions[this.systemRole].includes(permission);
+    return rolePermissions[this.role] && rolePermissions[this.role].includes(permission);
   } catch (error) {
     console.error('Error checking permission:', error);
     return false;

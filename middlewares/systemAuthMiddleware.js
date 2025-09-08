@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const SystemUser = require('../models/SystemUser');
+const Role = require('../models/Role');
 
 // JWT Secret for system users
 const SYSTEM_JWT_SECRET = process.env.SYSTEM_JWT_SECRET || 'system-secret-key-change-in-production';
@@ -42,15 +43,28 @@ const authenticateSystemToken = async (req, res, next) => {
             });
         }
 
+        // Get permissions from database based on role
+        let permissions = [];
+        try {
+            const role = await Role.findOne({ name: systemUser.role, isActive: true });
+            if (role) {
+                permissions = role.permissions || [];
+            }
+        } catch (error) {
+            console.error('Error fetching role permissions:', error);
+            // Fallback to empty permissions array
+            permissions = [];
+        }
+
         // Add user info to request object
         req.user = {
             userId: systemUser._id,
             username: systemUser.username,
-            systemRole: systemUser.systemRole,
+            role: systemUser.role,
             accessLevel: systemUser.accessLevel,
             employeeId: systemUser.employeeId,
             department: systemUser.department,
-            permissions: systemUser.permissions,
+            permissions: permissions,
             userType: 'system'
         };
 
@@ -95,7 +109,7 @@ const authorizeSystemRoles = (allowedRoles) => {
                 });
             }
 
-            const userRole = req.user.systemRole;
+            const userRole = req.user.role;
             const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
 
             if (!roles.includes(userRole)) {

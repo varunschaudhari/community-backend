@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const systemUserController = require('../controllers/systemUserController');
-const { 
-    authenticateSystemToken, 
-    authorizeSystemRoles, 
+const {
+    authenticateSystemToken,
+    authorizeSystemRoles,
     authorizeSystemAccessLevel,
     authorizeSystemPermissions
 } = require('../middlewares/systemAuthMiddleware');
@@ -13,7 +13,7 @@ const {
  * @desc    Get all system users with pagination and filtering
  * @access  Private (System Users with users:manage permission)
  */
-router.get('/', 
+router.get('/',
     authenticateSystemToken,
     authorizeSystemPermissions('users:manage'),
     systemUserController.getAllSystemUsers
@@ -33,11 +33,11 @@ router.get('/search',
 /**
  * @route   GET /api/system/users/stats
  * @desc    Get system user statistics
- * @access  Private (System Admin or System Manager)
+ * @access  Private (Super Admin or Admin)
  */
 router.get('/stats',
     authenticateSystemToken,
-    authorizeSystemRoles(['System Admin', 'System Manager']),
+    authorizeSystemRoles(['Super Admin', 'Admin']),
     systemUserController.getSystemUserStats
 );
 
@@ -55,44 +55,44 @@ router.get('/:id',
 /**
  * @route   PUT /api/system/users/:id
  * @desc    Update system user
- * @access  Private (System Admin or System Manager)
+ * @access  Private (Super Admin or Admin)
  */
 router.put('/:id',
     authenticateSystemToken,
-    authorizeSystemRoles(['System Admin', 'System Manager']),
+    authorizeSystemRoles(['Super Admin', 'Admin']),
     systemUserController.updateSystemUser
 );
 
 /**
  * @route   POST /api/system/users/:id/deactivate
  * @desc    Deactivate system user
- * @access  Private (System Admin only)
+ * @access  Private (Super Admin only)
  */
 router.post('/:id/deactivate',
     authenticateSystemToken,
-    authorizeSystemRoles('System Admin'),
+    authorizeSystemRoles('Super Admin'),
     systemUserController.deactivateSystemUser
 );
 
 /**
  * @route   POST /api/system/users/:id/activate
  * @desc    Activate system user
- * @access  Private (System Admin only)
+ * @access  Private (Super Admin only)
  */
 router.post('/:id/activate',
     authenticateSystemToken,
-    authorizeSystemRoles('System Admin'),
+    authorizeSystemRoles('Super Admin'),
     systemUserController.activateSystemUser
 );
 
 /**
  * @route   POST /api/system/users/:id/reset-password
  * @desc    Reset system user password
- * @access  Private (System Admin only)
+ * @access  Private (Super Admin only)
  */
 router.post('/:id/reset-password',
     authenticateSystemToken,
-    authorizeSystemRoles('System Admin'),
+    authorizeSystemRoles('Super Admin'),
     systemUserController.resetSystemUserPassword
 );
 
@@ -144,11 +144,11 @@ router.get('/active',
 /**
  * @route   GET /api/system/users/inactive
  * @desc    Get inactive system users only
- * @access  Private (System Admin only)
+ * @access  Private (Super Admin only)
  */
 router.get('/inactive',
     authenticateSystemToken,
-    authorizeSystemRoles('System Admin'),
+    authorizeSystemRoles('Super Admin'),
     (req, res) => {
         // This would be handled by the getAllSystemUsers controller with isActive filter
         req.query.isActive = 'false';
@@ -159,11 +159,11 @@ router.get('/inactive',
 /**
  * @route   GET /api/system/users/locked
  * @desc    Get locked system users
- * @access  Private (System Admin only)
+ * @access  Private (Super Admin only)
  */
 router.get('/locked',
     authenticateSystemToken,
-    authorizeSystemRoles('System Admin'),
+    authorizeSystemRoles('Super Admin'),
     async (req, res) => {
         try {
             const SystemUser = require('../models/SystemUser');
@@ -174,10 +174,10 @@ router.get('/locked',
             const lockedUsers = await SystemUser.find({
                 lockUntil: { $exists: true, $gt: new Date() }
             })
-            .select('-password -twoFactorSecret -loginAttempts')
-            .sort({ lockUntil: -1 })
-            .skip(skip)
-            .limit(parseInt(limit));
+                .select('-password -twoFactorSecret -loginAttempts')
+                .sort({ lockUntil: -1 })
+                .skip(skip)
+                .limit(parseInt(limit));
 
             const total = await SystemUser.countDocuments({
                 lockUntil: { $exists: true, $gt: new Date() }
@@ -210,11 +210,11 @@ router.get('/locked',
 /**
  * @route   POST /api/system/users/:id/unlock
  * @desc    Unlock system user account
- * @access  Private (System Admin only)
+ * @access  Private (Super Admin only)
  */
 router.post('/:id/unlock',
     authenticateSystemToken,
-    authorizeSystemRoles('System Admin'),
+    authorizeSystemRoles('Super Admin'),
     async (req, res) => {
         try {
             const { id } = req.params;

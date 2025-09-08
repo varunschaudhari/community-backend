@@ -24,49 +24,50 @@ const roleSchema = new mongoose.Schema({
     type: String,
     required: true,
     enum: [
-        // User permissions
-  'users:read',
-  'users:create',
-  'users:update',
-  'users:delete',
-      
+      // User permissions
+      'users:read',
+      'users:create',
+      'users:update',
+      'users:delete',
+      'users:manage',
+
       // Role permissions
       'roles:read',
       'roles:create',
-      'roles:update', 
+      'roles:update',
       'roles:delete',
-      
+
       // Analytics permissions
       'analytics:read',
-      
+
       // Settings permissions
       'settings:read',
       'settings:update',
-      
+
       // User management permissions
       'users:read',
       'users:create',
       'users:update',
       'users:delete',
-      
+
       // Community permissions
       'community:read',
       'community:create',
       'community:update',
       'community:delete',
-      
+
       // Event permissions
       'events:read',
       'events:create',
       'events:update',
       'events:delete',
-      
+
       // Document permissions
       'documents:read',
       'documents:create',
       'documents:update',
       'documents:delete',
-      
+
       // Notification permissions
       'notifications:read',
       'notifications:create',
@@ -203,11 +204,10 @@ roleSchema.statics.createDefaultRoles = async function (userId) {
       name: 'Super Admin',
       description: 'Full system access with all permissions',
       permissions: [
-        'users:read', 'users:create', 'users:update', 'users:delete',
+        'users:read', 'users:create', 'users:update', 'users:delete', 'users:manage',
         'roles:read', 'roles:create', 'roles:update', 'roles:delete',
         'analytics:read',
         'settings:read', 'settings:update',
-        'users:read', 'users:create', 'users:update', 'users:delete',
         'community:read', 'community:create', 'community:update', 'community:delete',
         'events:read', 'events:create', 'events:update', 'events:delete',
         'documents:read', 'documents:create', 'documents:update', 'documents:delete',
@@ -286,7 +286,7 @@ roleSchema.statics.createDefaultRoles = async function (userId) {
 };
 
 // Ensure virtual fields are serialized
-roleSchema.set('toJSON', { 
+roleSchema.set('toJSON', {
   virtuals: true,
   transform: function (doc, ret) {
     ret.id = ret._id;

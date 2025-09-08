@@ -33,7 +33,10 @@ const login = async (req, res) => {
         const trimmedPassword = password.trim();
 
         // Additional validation
-        if (trimmedUsername.length < 3) {
+        const mobileRegex = /^[0-9]{10}$/;
+        if (mobileRegex.test(trimmedUsername)) {
+            // It's a mobile number, no length validation needed
+        } else if (trimmedUsername.length < 3) {
             return res.status(400).json({
                 success: false,
                 message: 'Username must be at least 3 characters long'
@@ -47,8 +50,16 @@ const login = async (req, res) => {
             });
         }
 
-        // Find user by username (case-insensitive)
-        const user = await User.findByUsername(trimmedUsername.toLowerCase());
+        // Find user by username or mobile number
+        // First try to find by mobile number (if it's a 10-digit number)
+        let user;
+        if (mobileRegex.test(trimmedUsername)) {
+            // It's a mobile number, find by phone
+            user = await User.findByMobile(trimmedUsername);
+        } else {
+            // It's a username, find by username (case-insensitive)
+            user = await User.findByUsername(trimmedUsername.toLowerCase());
+        }
 
         // Check if user exists
         if (!user) {

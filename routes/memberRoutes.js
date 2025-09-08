@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const memberController = require('../controllers/memberController');
-const { authenticateToken } = require('../middlewares/authMiddleware');
+const { authenticateUnifiedToken } = require('../middlewares/unifiedAuthMiddleware');
 
-// Apply authentication middleware to all routes
-router.use(authenticateToken);
+// Apply unified authentication middleware to all routes (accepts both community and system user tokens)
+router.use(authenticateUnifiedToken);
 
 // Create a new member
 router.post('/create', memberController.createMember);

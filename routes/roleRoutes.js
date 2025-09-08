@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const roleController = require('../controllers/roleController');
-const { authenticateToken } = require('../middlewares/authMiddleware');
+const { authenticateUnifiedToken } = require('../middlewares/unifiedAuthMiddleware');
 
-// Apply authentication middleware to all routes
-router.use(authenticateToken);
+// Apply unified authentication middleware to all routes (accepts both community and system user tokens)
+router.use(authenticateUnifiedToken);
 
 // Get all available permissions
 router.get('/permissions', roleController.getAvailablePermissions);
