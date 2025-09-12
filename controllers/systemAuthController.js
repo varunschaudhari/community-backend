@@ -123,7 +123,7 @@ const systemLogin = async (req, res) => {
         const tokenPayload = {
             userId: systemUser._id,
             username: systemUser.username,
-            systemRole: systemUser.systemRole,
+            role: systemUser.role,
             accessLevel: systemUser.accessLevel,
             employeeId: systemUser.employeeId,
             department: systemUser.department,
@@ -177,8 +177,7 @@ const systemRegister = async (req, res) => {
             lastName,
             phone,
             systemRole,
-            accessLevel,
-            permissions
+            accessLevel
         } = req.body;
 
         // Input validation
@@ -216,6 +215,11 @@ const systemRegister = async (req, res) => {
             });
         }
 
+        // Get permissions from role
+        const Role = require('../models/Role');
+        const role = await Role.findOne({ name: systemRole || 'Member', isActive: true });
+        const rolePermissions = role ? role.permissions || [] : [];
+
         // Create new system user
         const newSystemUser = new SystemUser({
             username: username.toLowerCase(),
@@ -227,9 +231,9 @@ const systemRegister = async (req, res) => {
             firstName,
             lastName,
             phone: phone || '0000000000',
-            systemRole: systemRole || 'System Viewer',
+            role: systemRole || 'Member',
             accessLevel: accessLevel || 1,
-            permissions: permissions || ['system:read'],
+            permissions: rolePermissions, // Get permissions from role
             verified: true, // System users are verified by default
             createdBy: req.user.userId // Assuming the creator is authenticated
         });
@@ -240,7 +244,7 @@ const systemRegister = async (req, res) => {
         const tokenPayload = {
             userId: newSystemUser._id,
             username: newSystemUser.username,
-            systemRole: newSystemUser.systemRole,
+            role: newSystemUser.role,
             accessLevel: newSystemUser.accessLevel,
             employeeId: newSystemUser.employeeId,
             department: newSystemUser.department,

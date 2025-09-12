@@ -7,12 +7,12 @@ const SystemUser = require('../models/SystemUser');
  */
 const getAllSystemUsers = async (req, res) => {
     try {
-        const { page = 1, limit = 10, department, systemRole, isActive } = req.query;
-        
+        const { page = 1, limit = 10, department, role, isActive } = req.query;
+
         // Build filter object
         const filter = {};
         if (department) filter.department = department;
-        if (systemRole) filter.systemRole = systemRole;
+        if (role) filter.role = role;
         if (isActive !== undefined) filter.isActive = isActive === 'true';
 
         // Calculate pagination
@@ -319,7 +319,7 @@ const getSystemUserStats = async (req, res) => {
         const roleStats = await SystemUser.aggregate([
             {
                 $group: {
-                    _id: '$systemRole',
+                    _id: '$role',
                     count: { $sum: 1 }
                 }
             },

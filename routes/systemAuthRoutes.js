@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const systemAuthController = require('../controllers/systemAuthController');
-const { 
-    authenticateSystemToken, 
-    authorizeSystemRoles, 
+const {
+    authenticateSystemToken,
+    authorizeSystemRoles,
     authorizeSystemAccessLevel,
     authorizeSystemPermissions,
-    systemRateLimiter 
+    systemRateLimiter
 } = require('../middlewares/systemAuthMiddleware');
 
 /**
@@ -25,12 +25,12 @@ router.post('/reset', systemAuthController.resetSystemUser);
 
 /**
  * @route   POST /api/system/auth/register
- * @desc    Register a new system user (System Admin only)
- * @access  Private (System Admin)
+ * @desc    Register a new system user (Super Admin only)
+ * @access  Private (Super Admin)
  */
-router.post('/register', 
+router.post('/register',
     authenticateSystemToken,
-    authorizeSystemRoles('System Admin'),
+    authorizeSystemRoles('Super Admin'),
     systemAuthController.systemRegister
 );
 
@@ -64,16 +64,16 @@ router.post('/change-password', authenticateSystemToken, systemAuthController.ch
 
 /**
  * @route   GET /api/system/auth/admin
- * @desc    System Admin only endpoint example
- * @access  Private (System Admin only)
+ * @desc    Super Admin only endpoint example
+ * @access  Private (Super Admin only)
  */
 router.get('/admin',
     authenticateSystemToken,
-    authorizeSystemRoles('System Admin'),
+    authorizeSystemRoles('Super Admin'),
     (req, res) => {
         res.json({
             success: true,
-            message: 'System Admin access granted',
+            message: 'Super Admin access granted',
             data: {
                 user: req.user,
                 adminFeatures: ['user-management', 'system-settings', 'database-backup', 'security-monitoring']
@@ -84,16 +84,16 @@ router.get('/admin',
 
 /**
  * @route   GET /api/system/auth/manager
- * @desc    System Manager or Admin endpoint example
- * @access  Private (System Manager or Admin)
+ * @desc    Admin or Admin endpoint example
+ * @access  Private (Admin or Admin)
  */
 router.get('/manager',
     authenticateSystemToken,
-    authorizeSystemRoles(['System Admin', 'System Manager']),
+    authorizeSystemRoles(['Super Admin', 'Admin']),
     (req, res) => {
         res.json({
             success: true,
-            message: 'System Manager access granted',
+            message: 'Admin access granted',
             data: {
                 user: req.user,
                 managerFeatures: ['user-management', 'system-monitoring', 'reports-generation']
@@ -104,16 +104,16 @@ router.get('/manager',
 
 /**
  * @route   GET /api/system/auth/operator
- * @desc    System Operator or higher endpoint example
- * @access  Private (System Operator or higher)
+ * @desc    Moderator or higher endpoint example
+ * @access  Private (Moderator or higher)
  */
 router.get('/operator',
     authenticateSystemToken,
-    authorizeSystemRoles(['System Admin', 'System Manager', 'System Operator']),
+    authorizeSystemRoles(['Super Admin', 'Admin', 'Moderator']),
     (req, res) => {
         res.json({
             success: true,
-            message: 'System Operator access granted',
+            message: 'Moderator access granted',
             data: {
                 user: req.user,
                 operatorFeatures: ['system-monitoring', 'basic-maintenance', 'log-viewing']
@@ -207,7 +207,7 @@ router.get('/permissions', authenticateSystemToken, (req, res) => {
         success: true,
         data: {
             permissions: req.user.permissions,
-            systemRole: req.user.systemRole,
+            role: req.user.role,
             accessLevel: req.user.accessLevel,
             department: req.user.department
         }
@@ -225,7 +225,7 @@ router.get('/access-info', authenticateSystemToken, (req, res) => {
         data: {
             user: req.user,
             accessInfo: {
-                systemRole: req.user.systemRole,
+                role: req.user.role,
                 accessLevel: req.user.accessLevel,
                 permissions: req.user.permissions,
                 department: req.user.department,

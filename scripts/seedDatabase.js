@@ -23,7 +23,7 @@ const initialRoles = [
         name: 'Super Admin',
         description: 'Full system access with all permissions - highest level administrator',
         permissions: [
-            'users:read', 'users:create', 'users:update', 'users:delete',
+            'users:read', 'users:create', 'users:update', 'users:delete', 'users:manage',
             'roles:read', 'roles:create', 'roles:update', 'roles:delete',
             'analytics:read', 'settings:read', 'settings:update',
             'community:read', 'community:create', 'community:update', 'community:delete',
@@ -38,7 +38,7 @@ const initialRoles = [
         name: 'Admin',
         description: 'Administrative access with most permissions - system administrator',
         permissions: [
-            'users:read', 'users:create', 'users:update',
+            'users:read', 'users:create', 'users:update', 'users:manage',
             'roles:read', 'roles:create', 'roles:update',
             'analytics:read', 'settings:read', 'settings:update',
             'community:read', 'community:create', 'community:update',
@@ -175,7 +175,7 @@ const systemUsers = [
         firstName: 'System',
         lastName: 'Administrator',
         phone: '9876543210',
-        systemRole: 'Super Admin',
+        role: 'Super Admin',
         accessLevel: 5
     },
     {
@@ -188,7 +188,7 @@ const systemUsers = [
         firstName: 'System',
         lastName: 'Manager',
         phone: '9876543211',
-        systemRole: 'Admin',
+        role: 'Admin',
         accessLevel: 4
     },
     {
@@ -201,7 +201,7 @@ const systemUsers = [
         firstName: 'System',
         lastName: 'Operator',
         phone: '9876543212',
-        systemRole: 'Moderator',
+        role: 'Moderator',
         accessLevel: 3
     },
     {
@@ -214,7 +214,7 @@ const systemUsers = [
         firstName: 'System',
         lastName: 'Viewer',
         phone: '9876543213',
-        systemRole: 'Member',
+        role: 'Member',
         accessLevel: 2
     },
     {
@@ -227,7 +227,7 @@ const systemUsers = [
         firstName: 'HR',
         lastName: 'Manager',
         phone: '9876543214',
-        systemRole: 'Admin',
+        role: 'Admin',
         accessLevel: 4
     },
     {
@@ -240,7 +240,7 @@ const systemUsers = [
         firstName: 'Finance',
         lastName: 'Admin',
         phone: '9876543215',
-        systemRole: 'Moderator',
+        role: 'Moderator',
         accessLevel: 3
     }
 ];
@@ -430,7 +430,7 @@ async function seedSystemUsers() {
             firstName: 'System',
             lastName: 'Administrator',
             phone: '9999999999',
-            systemRole: 'Super Admin',
+            role: 'Super Admin',
             roleId: superAdminRole._id, // Assign role reference
             accessLevel: 5,
             verified: true,
@@ -459,9 +459,9 @@ async function seedSystemUsers() {
             }
 
             // Find the role for this system user
-            const role = await Role.findOne({ name: userData.systemRole });
+            const role = await Role.findOne({ name: userData.role });
             if (!role) {
-                console.log(`❌ Role ${userData.systemRole} not found for system user ${userData.username}`);
+                console.log(`❌ Role ${userData.role} not found for system user ${userData.username}`);
                 continue;
             }
 
@@ -475,11 +475,11 @@ async function seedSystemUsers() {
             await systemUser.save();
             createdSystemUsers.push({
                 username: systemUser.username,
-                systemRole: systemUser.systemRole,
+                role: systemUser.role,
                 department: systemUser.department,
                 roleId: systemUser.roleId
             });
-            console.log(`✅ Created system user: ${systemUser.username} (${systemUser.systemRole}) with role ID: ${role._id}`);
+            console.log(`✅ Created system user: ${systemUser.username} (${systemUser.role}) with role ID: ${role._id}`);
         }
 
         // Remove temporary admin

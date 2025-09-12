@@ -121,7 +121,7 @@ router.get('/role/:role',
     authorizeSystemPermissions('users:manage'),
     (req, res) => {
         // This would be handled by the getAllSystemUsers controller with role filter
-        req.query.systemRole = req.params.role;
+        req.query.role = req.params.role;
         systemUserController.getAllSystemUsers(req, res);
     }
 );
