@@ -122,6 +122,7 @@ class MemberController {
         search,
         role,
         isVerified,
+        verified,
         isActive
       } = req.query;
 
@@ -140,12 +141,14 @@ class MemberController {
 
       // Add role filter
       if (role) {
-        filter.roles = role;
+        filter.role = role;
       }
 
       // Add verification filter
       if (isVerified !== undefined) {
-        filter.isVerified = isVerified === 'true';
+        filter.verified = isVerified === 'true';
+      } else if (verified !== undefined) {
+        filter.verified = verified === 'true';
       }
 
       // Add active filter
