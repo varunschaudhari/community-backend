@@ -415,6 +415,65 @@ const searchSystemUsers = async (req, res) => {
     }
 };
 
+/**
+ * Delete system user
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const deleteSystemUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        console.log(`Attempting to delete system user with ID: ${id}`);
+        console.log(`Requesting user: ${req.user.userId}, role: ${req.user.role}`);
+
+        // Check if system user exists
+        const systemUser = await SystemUser.findById(id);
+        if (!systemUser) {
+            console.log(`System user with ID ${id} not found`);
+            return res.status(404).json({
+                success: false,
+                message: 'System user not found'
+            });
+        }
+
+        console.log(`Found system user: ${systemUser.username}, role: ${systemUser.role}`);
+
+        // Prevent self-deletion
+        if (systemUser._id.toString() === req.user.userId) {
+            console.log('Attempted self-deletion blocked');
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot delete your own account'
+            });
+        }
+
+        // Prevent deletion of Super Admin accounts (safety measure)
+        if (systemUser.role === 'Super Admin') {
+            console.log('Attempted Super Admin deletion blocked');
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot delete Super Admin accounts'
+            });
+        }
+
+        // Delete the system user
+        const deletedUser = await SystemUser.findByIdAndDelete(id);
+        console.log(`Successfully deleted system user: ${deletedUser?.username}`);
+
+        res.status(200).json({
+            success: true,
+            message: 'System user deleted successfully'
+        });
+
+    } catch (error) {
+        console.error('Delete system user error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error. Please try again later.'
+        });
+    }
+};
+
 module.exports = {
     getAllSystemUsers,
     getSystemUserById,
@@ -423,5 +482,6 @@ module.exports = {
     activateSystemUser,
     resetSystemUserPassword,
     getSystemUserStats,
-    searchSystemUsers
+    searchSystemUsers,
+    deleteSystemUser
 };

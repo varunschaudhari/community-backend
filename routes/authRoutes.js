@@ -45,7 +45,7 @@ router.get('/validate', authenticateToken, authController.validateToken);
  */
 router.get('/admin',
     authenticateToken,
-    authorizeRoles('admin'),
+    authorizeRoles(['Admin', 'Super Admin']),
     (req, res) => {
         res.json({
             success: true,
@@ -65,7 +65,7 @@ router.get('/admin',
  */
 router.get('/member',
     authenticateToken,
-    authorizeRoles('member'),
+    authorizeRoles('Member'),
     (req, res) => {
         res.json({
             success: true,
@@ -85,7 +85,7 @@ router.get('/member',
  */
 router.get('/moderator',
     authenticateToken,
-    authorizeRoles(['admin', 'moderator']),
+    authorizeRoles(['Admin', 'Moderator', 'Super Admin']),
     (req, res) => {
         res.json({
             success: true,

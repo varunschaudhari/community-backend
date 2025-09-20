@@ -12,6 +12,8 @@ const roleRoutes = require('./routes/roleRoutes');
 const systemAuthRoutes = require('./routes/systemAuthRoutes');
 const systemUserRoutes = require('./routes/systemUserRoutes');
 const permissionRoutes = require('./routes/permissionRoutes');
+const userRoutes = require('./routes/userRoutes');
+const userProfileRoutes = require('./routes/userProfileRoutes');
 
 // Create Express app
 const app = express();
@@ -122,6 +124,8 @@ app.use('/api/roles', roleRoutes);
 app.use('/api/system/auth', systemAuthRoutes);
 app.use('/api/system/users', systemUserRoutes);
 app.use('/api/permissions', permissionRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/users', userProfileRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -132,9 +136,11 @@ app.get('/', (req, res) => {
         endpoints: {
             auth: '/api/auth',
             users: '/api/community/users',
+            enhancedUsers: '/api/users',
             roles: '/api/roles',
             systemAuth: '/api/system/auth',
             systemUsers: '/api/system/users',
+            permissions: '/api/permissions',
             health: '/health'
         },
         documentation: 'API documentation coming soon...'

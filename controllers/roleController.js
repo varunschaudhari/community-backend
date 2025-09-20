@@ -1,5 +1,6 @@
 const Role = require('../models/Role');
 const User = require('../models/User');
+const SystemUser = require('../models/SystemUser');
 
 class RoleController {
   /**
@@ -48,12 +49,22 @@ class RoleController {
         .skip(skip)
         .limit(parseInt(limit));
 
-      // Get member counts for each role
+      // Get member counts for each role (including both User and SystemUser)
       const rolesWithMemberCount = await Promise.all(
         roles.map(async (role) => {
-          const memberCount = await User.countDocuments({ role: role.name });
+          const userCount = await User.countDocuments({ role: role._id });
+          // System users can have role as string (role field) or ObjectId (roleId field)
+          // Use $or to avoid double counting the same user
+          const systemUserCount = await SystemUser.countDocuments({
+            $or: [
+              { roleId: role._id },
+              { role: role.name }
+            ]
+          });
+          const totalMemberCount = userCount + systemUserCount;
+
           const roleObj = role.toObject();
-          roleObj.memberCount = memberCount;
+          roleObj.memberCount = totalMemberCount;
           return roleObj;
         })
       );
@@ -100,7 +111,7 @@ class RoleController {
       }
 
       // Get member count
-      const memberCount = await User.countDocuments({ role: role.name });
+      const memberCount = await User.countDocuments({ role: role._id });
       const roleObj = role.toObject();
       roleObj.memberCount = memberCount;
 
@@ -277,7 +288,7 @@ class RoleController {
       }
 
       // Check if role is assigned to any users
-      const memberCount = await User.countDocuments({ role: role.name });
+      const memberCount = await User.countDocuments({ role: role._id });
       if (memberCount > 0) {
         return res.status(400).json({
           success: false,
@@ -548,20 +559,42 @@ class RoleController {
       const systemRoles = await Role.countDocuments({ isSystem: true });
       const customRoles = await Role.countDocuments({ isSystem: false });
 
-      // Get roles by member count
+      // Get roles by member count (including both users and system users)
       const rolesByMemberCount = await Role.aggregate([
         {
           $lookup: {
             from: 'users',
-            localField: 'name',
+            localField: '_id',
             foreignField: 'role',
             as: 'users'
           }
         },
         {
+          $lookup: {
+            from: 'systemusers',
+            localField: '_id',
+            foreignField: 'roleId',
+            as: 'systemUsersByRoleId'
+          }
+        },
+        {
+          $lookup: {
+            from: 'systemusers',
+            localField: 'name',
+            foreignField: 'role',
+            as: 'systemUsersByRoleName'
+          }
+        },
+        {
           $project: {
             name: 1,
-            memberCount: { $size: '$users' }
+            memberCount: {
+              $add: [
+                { $size: '$users' },
+                { $size: '$systemUsersByRoleId' },
+                { $size: '$systemUsersByRoleName' }
+              ]
+            }
           }
         },
         {

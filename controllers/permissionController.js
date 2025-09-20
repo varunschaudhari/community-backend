@@ -14,11 +14,12 @@ const ROLE_PERMISSIONS = {
       'settings:read', 'settings:update',
       'community:read', 'community:create', 'community:update', 'community:delete',
       'documents:read', 'documents:create', 'documents:update', 'documents:delete',
-      'messages:read', 'messages:create', 'messages:update', 'messages:delete'
+      'messages:read', 'messages:create', 'messages:update', 'messages:delete',
+      'family_tree:read', 'family_tree:create', 'family_tree:update', 'family_tree:delete'
     ],
     resources: [
       'dashboard', 'analytics', 'messages', 'team', 'documents',
-      'users', 'user-management', 'system-users', 'roles', 'settings'
+      'user', 'user-management', 'system-users', 'roles', 'user-profile', 'family-tree', 'settings'
     ]
   },
   'Admin': {
@@ -34,7 +35,7 @@ const ROLE_PERMISSIONS = {
     ],
     resources: [
       'dashboard', 'analytics', 'messages', 'team', 'documents',
-      'users', 'user-management', 'system-users', 'roles', 'settings'
+      'user', 'user-management', 'system-users', 'roles', 'user-profile', 'family-tree', 'settings'
     ]
   },
   'Moderator': {
@@ -44,11 +45,12 @@ const ROLE_PERMISSIONS = {
       'settings:read',
       'community:read', 'community:update',
       'documents:read', 'documents:create',
-      'messages:read', 'messages:create'
+      'messages:read', 'messages:create',
+      'family_tree:read', 'family_tree:create'
     ],
     resources: [
       'dashboard', 'analytics', 'messages', 'team', 'documents',
-      'users', 'user-management', 'system-users', 'roles', 'settings'
+      'user', 'user-management', 'system-users', 'roles', 'user-profile', 'family-tree', 'settings'
     ]
   },
   'Member': {
@@ -75,11 +77,12 @@ const ROLE_PERMISSIONS = {
       'settings:read', 'settings:update',
       'community:read', 'community:create', 'community:update', 'community:delete',
       'documents:read', 'documents:create', 'documents:update', 'documents:delete',
-      'messages:read', 'messages:create', 'messages:update', 'messages:delete'
+      'messages:read', 'messages:create', 'messages:update', 'messages:delete',
+      'family_tree:read', 'family_tree:create', 'family_tree:update', 'family_tree:delete'
     ],
     resources: [
       'dashboard', 'analytics', 'messages', 'team', 'documents',
-      'users', 'user-management', 'system-users', 'roles', 'settings'
+      'user', 'user-management', 'system-users', 'roles', 'user-profile', 'family-tree', 'settings'
     ]
   }
 };

@@ -15,19 +15,19 @@ class MemberController {
         middleName,
         lastName,
         email,
-        phone,
+        phoneNumber,
         password,
         pan,
         adhar,
         maritalStatus,
-        dateOfBirth,
-        dateOfMarriage,
-        roles,
+        dobAsPerDocument,
+        role,
         kul,
         gotra,
-        fatherName,
-        motherName,
-        childrenName
+        fatherDetails,
+        motherDetails,
+        marriages,
+        children
       } = req.body;
 
       // Check if user with email already exists
@@ -40,7 +40,7 @@ class MemberController {
       }
 
       // Check if user with phone already exists
-      const existingPhone = await User.findOne({ phone });
+      const existingPhone = await User.findOne({ phoneNumber });
       if (existingPhone) {
         return res.status(409).json({
           success: false,
@@ -52,30 +52,65 @@ class MemberController {
       const saltRounds = 12;
       const hashedPassword = await bcrypt.hash(password, saltRounds);
 
+      // Find the role by name
+      let roleId;
+      if (role) {
+        const roleDoc = await Role.findOne({ name: role });
+        if (!roleDoc) {
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid role specified'
+          });
+        }
+        roleId = roleDoc._id;
+      } else {
+        // Default to 'Member' role if no role specified
+        const defaultRole = await Role.findOne({ name: 'Member' });
+        if (!defaultRole) {
+          // If Member role doesn't exist, create it
+          const memberRole = new Role({
+            name: 'Member',
+            description: 'Standard member access with basic permissions',
+            permissions: [
+              'users:read',
+              'community:read',
+              'events:read',
+              'documents:read',
+              'notifications:read'
+            ],
+            isSystem: true,
+            isDefault: true,
+            createdBy: req.user._id
+          });
+          await memberRole.save();
+          roleId = memberRole._id;
+          console.log('✅ Created default Member role');
+        } else {
+          roleId = defaultRole._id;
+        }
+      }
+
       // Create new user
       const userData = {
         firstName,
         middleName,
         lastName,
         email: email.toLowerCase(),
-        phone,
+        phoneNumber,
         password: hashedPassword,
         pan,
         adhar,
+        dobAsPerDocument: new Date(dobAsPerDocument),
+        role: roleId,
         maritalStatus,
-        dateOfBirth: new Date(dateOfBirth),
-        role: roles, // Map roles to role field
         kul,
         gotra,
-        fatherName,
-        motherName,
-        childrenName
+        fatherDetails: fatherDetails || {},
+        motherDetails: motherDetails || {},
+        marriages: marriages || [],
+        children: children || [],
+        addedBy: req.user._id // The user who is creating this user
       };
-
-      // Add date of marriage if provided and marital status is married
-      if (dateOfMarriage && maritalStatus === 'Married') {
-        userData.dateOfMarriage = new Date(dateOfMarriage);
-      }
 
       const user = new User(userData);
       await user.save();
@@ -157,7 +192,7 @@ class MemberController {
       }
 
       const users = await User.find(filter)
-        .populate('roleId', 'name description permissions')
+        .populate('role', 'name description permissions isActive')
         .select('-password')
         .sort({ createdAt: -1 })
         .skip(skip)
@@ -165,16 +200,8 @@ class MemberController {
 
       const total = await User.countDocuments(filter);
 
-      // Add role information to each user
-      const usersWithRoles = users.map(user => {
-        const userObj = user.toObject();
-        return {
-          ...userObj,
-          roleName: userObj.roleId?.name || 'No Role',
-          roleDescription: userObj.roleId?.description || '',
-          permissions: userObj.roleId?.permissions || []
-        };
-      });
+      // Users already have simple role field
+      const usersWithRoles = users.map(user => user.toObject());
 
       res.json({
         success: true,
@@ -205,7 +232,7 @@ class MemberController {
       const { id } = req.params;
 
       const user = await User.findById(id)
-        .populate('roleId', 'name description permissions')
+        .populate('role', 'name description permissions isActive')
         .select('-password');
 
       if (!user) {
@@ -215,17 +242,9 @@ class MemberController {
         });
       }
 
-      const userObj = user.toObject();
-      const userWithRole = {
-        ...userObj,
-        roleName: userObj.roleId?.name || 'No Role',
-        roleDescription: userObj.roleId?.description || '',
-        permissions: userObj.roleId?.permissions || []
-      };
-
       res.json({
         success: true,
-        data: userWithRole
+        data: user
       });
 
     } catch (error) {
@@ -263,7 +282,7 @@ class MemberController {
         updateData,
         { new: true, runValidators: true }
       )
-        .populate('roleId', 'name description permissions')
+        .populate('role', 'name description permissions isActive')
         .select('-password');
 
       if (!user) {
@@ -273,18 +292,10 @@ class MemberController {
         });
       }
 
-      const userObj = user.toObject();
-      const userWithRole = {
-        ...userObj,
-        roleName: userObj.roleId?.name || 'No Role',
-        roleDescription: userObj.roleId?.description || '',
-        permissions: userObj.roleId?.permissions || []
-      };
-
       res.json({
         success: true,
         message: 'User updated successfully',
-        data: userWithRole
+        data: user
       });
 
     } catch (error) {
@@ -436,8 +447,19 @@ class MemberController {
 
       const roleStats = await User.aggregate([
         {
+          $lookup: {
+            from: 'roles',
+            localField: 'role',
+            foreignField: '_id',
+            as: 'roleInfo'
+          }
+        },
+        {
+          $unwind: '$roleInfo'
+        },
+        {
           $group: {
-            _id: '$role',
+            _id: '$roleInfo.name',
             count: { $sum: 1 }
           }
         }
@@ -491,22 +513,27 @@ class MemberController {
         });
       }
 
-      // Verify role exists
-      if (roleId) {
-        const role = await Role.findById(roleId);
-        if (!role) {
-          return res.status(400).json({
-            success: false,
-            message: 'Invalid role ID'
-          });
-        }
+      // Validate role exists and is active
+      const role = await Role.findById(roleId);
+      if (!role) {
+        return res.status(400).json({
+          success: false,
+          message: 'Role not found'
+        });
       }
 
-      user.roleId = roleId;
+      if (!role.isActive) {
+        return res.status(400).json({
+          success: false,
+          message: 'Cannot assign inactive role'
+        });
+      }
+
+      user.role = roleId;
       await user.save();
 
       const updatedUser = await User.findById(id)
-        .populate('roleId', 'name description permissions')
+        .populate('role', 'name description permissions isActive')
         .select('-password');
 
       res.json({

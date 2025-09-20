@@ -64,13 +64,24 @@ router.put('/:id',
 );
 
 /**
+ * @route   DELETE /api/system/users/:id
+ * @desc    Delete system user
+ * @access  Private (Super Admin only)
+ */
+router.delete('/:id',
+    authenticateSystemToken,
+    authorizeSystemRoles(['Super Admin']),
+    systemUserController.deleteSystemUser
+);
+
+/**
  * @route   POST /api/system/users/:id/deactivate
  * @desc    Deactivate system user
  * @access  Private (Super Admin only)
  */
 router.post('/:id/deactivate',
     authenticateSystemToken,
-    authorizeSystemRoles('Super Admin'),
+    authorizeSystemRoles(['Super Admin']),
     systemUserController.deactivateSystemUser
 );
 
@@ -81,7 +92,7 @@ router.post('/:id/deactivate',
  */
 router.post('/:id/activate',
     authenticateSystemToken,
-    authorizeSystemRoles('Super Admin'),
+    authorizeSystemRoles(['Super Admin']),
     systemUserController.activateSystemUser
 );
 
@@ -92,7 +103,7 @@ router.post('/:id/activate',
  */
 router.post('/:id/reset-password',
     authenticateSystemToken,
-    authorizeSystemRoles('Super Admin'),
+    authorizeSystemRoles(['Super Admin']),
     systemUserController.resetSystemUserPassword
 );
 
@@ -148,7 +159,7 @@ router.get('/active',
  */
 router.get('/inactive',
     authenticateSystemToken,
-    authorizeSystemRoles('Super Admin'),
+    authorizeSystemRoles(['Super Admin']),
     (req, res) => {
         // This would be handled by the getAllSystemUsers controller with isActive filter
         req.query.isActive = 'false';
@@ -163,7 +174,7 @@ router.get('/inactive',
  */
 router.get('/locked',
     authenticateSystemToken,
-    authorizeSystemRoles('Super Admin'),
+    authorizeSystemRoles(['Super Admin']),
     async (req, res) => {
         try {
             const SystemUser = require('../models/SystemUser');
@@ -214,7 +225,7 @@ router.get('/locked',
  */
 router.post('/:id/unlock',
     authenticateSystemToken,
-    authorizeSystemRoles('Super Admin'),
+    authorizeSystemRoles(['Super Admin']),
     async (req, res) => {
         try {
             const { id } = req.params;

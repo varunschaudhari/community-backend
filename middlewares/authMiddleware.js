@@ -47,8 +47,9 @@ const authenticateToken = async (req, res, next) => {
             }
 
             try {
-                // Check if user still exists in database
-                const user = await User.findById(decoded.userId);
+                // Check if user still exists in database with populated role
+                const user = await User.findById(decoded.userId)
+                    .populate('role', 'name description permissions isActive');
 
                 if (!user) {
                     return res.status(401).json({
@@ -65,11 +66,23 @@ const authenticateToken = async (req, res, next) => {
                     });
                 }
 
+                // Check if user's role is active
+                if (!user.role || !user.role.isActive) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'User role is inactive. Please contact administrator.'
+                    });
+                }
+
                 // Attach user information to request object
                 req.user = {
+                    id: decoded.userId,
                     userId: decoded.userId,
                     username: decoded.username,
-                    role: decoded.role,
+                    role: user.role.name, // Role name for backward compatibility
+                    roleId: user.role._id, // Role ID for new functionality
+                    roleData: user.role, // Full role object with permissions
+                    permissions: user.role.permissions, // User's permissions
                     email: decoded.email
                 };
 
@@ -112,7 +125,9 @@ const authorizeRoles = (requiredRoles) => {
             const allowedRoles = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles];
 
             // Check if user's role is in the allowed roles
-            if (!allowedRoles.includes(req.user.role)) {
+            const hasRequiredRole = allowedRoles.includes(req.user.role);
+
+            if (!hasRequiredRole) {
                 return res.status(403).json({
                     success: false,
                     message: `Access denied. Required role(s): ${allowedRoles.join(', ')}. Your role: ${req.user.role}`
@@ -137,7 +152,7 @@ const authorizeRoles = (requiredRoles) => {
  * @param {Function} next - Express next function
  */
 const authorizeAdmin = (req, res, next) => {
-    return authorizeRoles('admin')(req, res, next);
+    return authorizeRoles(['Admin', 'Super Admin'])(req, res, next);
 };
 
 /**
@@ -147,7 +162,7 @@ const authorizeAdmin = (req, res, next) => {
  * @param {Function} next - Express next function
  */
 const authorizeMember = (req, res, next) => {
-    return authorizeRoles('member')(req, res, next);
+    return authorizeRoles('Member')(req, res, next);
 };
 
 /**
@@ -176,13 +191,18 @@ const optionalAuth = async (req, res, next) => {
             }
 
             try {
-                const user = await User.findById(decoded.userId);
+                const user = await User.findById(decoded.userId)
+                    .populate('role', 'name description permissions isActive');
 
-                if (user && user.verified) {
+                if (user && user.verified && user.role && user.role.isActive) {
                     req.user = {
+                        id: decoded.userId,
                         userId: decoded.userId,
                         username: decoded.username,
-                        role: decoded.role,
+                        role: user.role.name, // Role name for backward compatibility
+                        roleId: user.role._id, // Role ID for new functionality
+                        roleData: user.role, // Full role object with permissions
+                        permissions: user.role.permissions, // User's permissions
                         email: decoded.email
                     };
                 } else {
